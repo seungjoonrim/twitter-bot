@@ -111,18 +111,16 @@ function sortByReferences(tweets) {
 
 function removeHashtags(str) {
   const words = str.split(" ");
+  // Only remove the # from hashtags in the middle of sentences
   for (let i = 0; i < words.length; i++) {
-    if (words[i].startsWith("#")) {
-      if ((i === 0 || !words[i - 1].startsWith("#")) &&
-          (i === words.length - 1 || !words[i + 1].startsWith("#"))) {
-        words[i] = words[i].substring(1);
-      } else {
-        words.splice(i, 1);
-        i--;
-      }
+    if (words[i].startsWith("#") &&
+        (i === 0 || !words[i - 1].startsWith("#")) &&
+        (i === words.length - 1 || !words[i + 1].startsWith("#"))) {
+      words[i] = words[i].substring(1);
     }
   }
-  return words.join(" ");
+  // Entirely remove the hashtags that are left. (At the end of the tweet)
+  return words.filter(word => !word.startsWith("#")).join(" ");
 }
 
 // OpenAI ----------------------------------------------------------------------
