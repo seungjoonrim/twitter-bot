@@ -8,7 +8,7 @@ const BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAP%2FzGQEAAAAAmVjoA86E1ZzrpVV8nR9X1cuB
 const appOnlyClient = new TwitterApi(BEARER_TOKEN);
 
 const rules = await appOnlyClient.v2.streamRules();
-console.log("____________________ RULES ____________________");
+console.log("____________________ RULES");
 console.log(rules);
 
 // Add rules -------------------------------------------------------------------

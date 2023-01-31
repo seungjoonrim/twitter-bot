@@ -23,10 +23,7 @@ const OAI_API_KEY = process.env.SACRIFICE_OAI_API_KEY;
 // Prompt constants -------------------------------------------------------------
 const PERSONALITY = "as if you were Marcus Aurelius";
 const TYPE_OF_TWEET = "";
-const OPTIONAL_PHRASES = [
-  "brother in christ",
-  "Sigma",
-];
+const OPTIONAL_PHRASES = [];
 const ADDITIONAL_PARAMS = [
   "Do not use any #hashtags",
   "Do not use any emojis",
@@ -141,7 +138,7 @@ async function reqOpenAi(prompt) {
       presence_penalty: 0.6, // what does this do?
       stop: null, // what does this do?
     });
-    console.log("______________ OPEN AI RESPONSE _____________:", response.data);
+    console.log("______________ OPEN AI RESPONSE:", response.data);
     const text = response.data.choices[0].text;
     if ((text.charAt(2) == '"') && (text.charAt(text.length - 1) == '"')) {
       return text.slice(3, -1);
@@ -165,9 +162,9 @@ async function postReply(tweets, reply) {
         'in_reply_to_user_id',
       ],
     });
-    console.log("____________________ REPLY SUCCESS ____________________");
+    console.log("____________________ REPLY SUCCESS");
     postedReplies.push(replyTweet.data);
-    console.log("____________________ ALL REPLIES SO FAR ____________________");
+    console.log("____________________ ALL REPLIES SO FAR");
     console.log(postedReplies);
   } catch (err) {
     console.log("Error replying to tweet", err);
@@ -178,7 +175,7 @@ async function createReply() {
   timer = undefined;
 
   const repliesForUserId = postedReplies.filter(t => t.in_reply_to_user_id == tweetStack[0].data.author_id);
-  console.log(`____________________ REPLY COUNT FOR USER: ${repliesForUserId.length} ____________________`);
+  console.log(`____________________ REPLY COUNT FOR USER: ${repliesForUserId.length}`);
 
   // We have to sort because sometimes the API returns tweets from threads in the wrong order
   const sorted = sortByReferences(tweetStack);
@@ -192,14 +189,14 @@ async function createReply() {
       (tweetStack.length == 1 && Object.keys(tweetStack[0].data.attachments).length > 0) || // single tweets with an image
       (joinedTweets.length < 80) || // tweets less than 50 chars long
       (repliesForUserId.length >= 2)) { // a tweet if already replied to twice
-    console.log("____________________ IGNORING THIS TWEET ____________________");
+    console.log("____________________ IGNORING THIS TWEET");
     tweetStack = [];
     return;
   }
 
   const openAiPrompt = makePrompt(joinedTweets);
 
-  console.log("____________________ HERES THE PROMPT ____________________");
+  console.log("____________________ HERES THE PROMPT");
   console.log(openAiPrompt);
 
   const reply = await reqOpenAi(openAiPrompt);
@@ -211,7 +208,7 @@ async function createReply() {
   // Keep it to 10 tweets/day
   if (postedReplies.length > 9) {
     const sleepTime = 12; // hours
-    console.log(`____________________ TWEET LIMIT REACHED, SLEEPING FOR ${sleepTime} hours ____________________`);
+    console.log(`____________________ TWEET LIMIT REACHED, SLEEPING FOR ${sleepTime} hours`);
     postedReplies = [];
     isSleeping = true;
     setTimeout(() => {
@@ -239,10 +236,10 @@ async function waitForAdditionalTweets() {
 }
 
 function maybeReply(eventData) {
-  console.log("____________________ SOMEONE TWEETED ____________________\n", eventData);
+  console.log("____________________ SOMEONE TWEETED\n", eventData);
 
   if (isSleeping) {
-    console.log("____________________ SLEEPING ____________________");
+    console.log("____________________ SLEEPING");
     return;
   }
   // Set the timer to wait for additional tweets that may be part of a thread
