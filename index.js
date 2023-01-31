@@ -28,7 +28,6 @@ const ADDITIONAL_PARAMS = [
   "Do not use any #hashtags",
   "Do not use any emojis",
   "Don't use a direct quote",
-  // "Don't outright mention the fact that you smoke pot, rather, imply it",
   "Keep the response to 250 characters or less",
   "Return the response in quotes",
 ];
@@ -75,6 +74,7 @@ let postedReplies = [];
 let timer = undefined;
 let isSleeping = false;
 
+// Helpers ---------------------------------------------------------------------
 function joinTweets(tweets) {
   const tweetContents = tweets.map(t => t.data.text);
   return tweetContents.join("\n\n");
@@ -125,6 +125,7 @@ function removeHashtags(str) {
   return words.join(" ");
 }
 
+// OpenAI ----------------------------------------------------------------------
 async function reqOpenAi(prompt) {
   try {
     const response = await openai.createCompletion({
@@ -150,6 +151,7 @@ async function reqOpenAi(prompt) {
   }
 }
 
+// Twitter ---------------------------------------------------------------------
 async function postReply(tweets, reply) {
   try {
     const replyResp = await userClient.v2.reply(
