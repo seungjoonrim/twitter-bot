@@ -23,7 +23,10 @@ const OAI_API_KEY = process.env.SACRIFICE_OAI_API_KEY;
 // Prompt constants -------------------------------------------------------------
 const PERSONALITY = "as if you were Marcus Aurelius";
 const TYPE_OF_TWEET = "";
-const OPTIONAL_PHRASES = [];
+const OPTIONAL_PHRASES = [
+  "sacrifice",
+  "value",
+];
 const ADDITIONAL_PARAMS = [
   "Do not use any #hashtags",
   "Do not use any emojis",
@@ -48,7 +51,7 @@ function promptParams() {
     return result;
   }, []);
   return `From the tweet above, come up with a ${TYPE_OF_TWEET} reply tweet ${PERSONALITY}.` +
-  // ` Feel free to use 0 to ${phrases.length} of the following words and phrases if you think any are appropriate: ${phrases.join(", ")}.` +
+  ` Feel free to use 0 to ${phrases.length} of the following words and phrases if you think any are appropriate: ${phrases.join(", ")}.` +
   ` ${ADDITIONAL_PARAMS.join(". ")}.`;
 }
 
@@ -183,12 +186,10 @@ async function createReply() {
 
   // (For now) Don't reply to:
   if ((tweetStack.length == 0) ||
-      (tweetStack[0].data.referenced_tweets && tweetStack[0].data.referenced_tweets[0].type == "retweeted") || // retweets
-      (tweetStack[0].data.referenced_tweets && tweetStack[0].data.referenced_tweets[0].type == "quoted") || // quote tweets
       (tweetStack.length == 1 && tweetStack[0].data.in_reply_to_user_id) || // tweet replies
       (tweetStack.length == 1 && Object.keys(tweetStack[0].data.attachments).length > 0) || // single tweets with an image
       (joinedTweets.length < 80) || // tweets less than 50 chars long
-      (repliesForUserId.length >= 2)) { // a tweet if already replied to twice
+      (repliesForUserId.length >= 1)) { // a tweet if already replied to once
     console.log("____________________ IGNORING THIS TWEET");
     tweetStack = [];
     return;
