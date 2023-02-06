@@ -88,7 +88,7 @@ function promptParams() {
     return result;
   }, []);
   return `From the tweet above, come up with a ${TYPE_OF_TWEET} reply tweet ${PERSONALITY}.` +
-  ` Feel free to use 0 to ${phrases.length} of the following words and phrases if you think any are appropriate: ${phrases.join(", ")}.` +
+  // ` Feel free to use 0 to ${phrases.length} of the following words and phrases if you think any are appropriate: ${phrases.join(", ")}.` +
   ` ${ADDITIONAL_PARAMS.join(". ")}.`;
 }
 

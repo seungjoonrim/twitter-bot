@@ -3,7 +3,7 @@ import {
   TwitterApi
 } from "twitter-api-v2";
 
-const BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAP%2FzGQEAAAAAmVjoA86E1ZzrpVV8nR9X1cuB95w%3Dhihl3FJKahNLVNJfu4Jhxn8km8qdbsAHV1giq8v4pcyChqA0Gm";
+const BEARER_TOKEN = process.env.SACRIFICE_BEARER_TOKEN;
 
 const appOnlyClient = new TwitterApi(BEARER_TOKEN);
 
