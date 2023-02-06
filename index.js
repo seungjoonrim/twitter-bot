@@ -20,7 +20,7 @@ const API_KEY_SECRET = process.env.SACRIFICE_API_KEY_SECRET;
 // OpenAI creds ----------------------------------------------------------------
 const OAI_API_KEY = process.env.SACRIFICE_OAI_API_KEY;
 
-// Prompt constants ------------------------------------------------------------
+// Prompt params ---------------------------------------------------------------
 const PERSONALITY = "as if you were Marcus Aurelius";
 const TYPE_OF_TWEET = "";
 const OPTIONAL_PHRASES = [
@@ -36,7 +36,42 @@ const ADDITIONAL_PARAMS = [
 ];
 
 // Twitter stream config -------------------------------------------------------
+const TWEET_FIELDS = [
+  "attachments",
+  "author_id",
+  "referenced_tweets",
+  "in_reply_to_user_id",
+  "created_at",
+  "conversation_id",
+];
+const TWEET_EXPANSIONS = [
+  "referenced_tweets.id"
+];
 
+// OpenAI client ---------------------------------------------------------------
+const configuration = new Configuration({
+  apiKey: OAI_API_KEY
+});
+const openai = new OpenAIApi(configuration);
+
+// OAuth1.0a client ------------------------------------------------------------
+const userClient = new TwitterApi({
+  appKey: API_KEY,
+  appSecret: API_KEY_SECRET,
+  accessToken: ACCESS_TOKEN,
+  accessSecret: ACCESS_TOKEN_SECRET,
+});
+
+// OAuth2 client (app-only or user context) ------------------------------------
+const appOnlyClient = new TwitterApi(BEARER_TOKEN);
+
+// Global vars -----------------------------------------------------------------
+let tweetStack = [];
+let postedReplies = [];
+let timer = undefined;
+let stream = undefined;
+
+// Helpers ---------------------------------------------------------------------
 function promptParams() {
   const min = Math.ceil(1);;
   const max = Math.floor(3);;
@@ -57,29 +92,6 @@ function promptParams() {
   ` ${ADDITIONAL_PARAMS.join(". ")}.`;
 }
 
-// OpenAI client ---------------------------------------------------------------
-const configuration = new Configuration({
-  apiKey: OAI_API_KEY
-});
-const openai = new OpenAIApi(configuration);
-
-// OAuth1.0a client ------------------------------------------------------------
-const userClient = new TwitterApi({
-  appKey: API_KEY,
-  appSecret: API_KEY_SECRET,
-  accessToken: ACCESS_TOKEN,
-  accessSecret: ACCESS_TOKEN_SECRET,
-});
-
-// OAuth2 client (app-only or user context) ------------------------------------
-const appOnlyClient = new TwitterApi(BEARER_TOKEN);
-
-let tweetStack = [];
-let postedReplies = [];
-let timer = undefined;
-let isSleeping = false;
-
-// Helpers ---------------------------------------------------------------------
 function joinTweets(tweets) {
   const tweetContents = tweets.map(t => t.text);
   return tweetContents.join("\n\n");
@@ -229,11 +241,12 @@ async function createReplies(tweets) {
 
     if (postedReplies.length > 9) {
       const sleepTime = 12; // hours
-      console.log(`____________________ TWEET LIMIT REACHED, SLEEPING FOR ${sleepTime} hours`);
+      console.log(`____________________ TWEET LIMIT REACHED, CLOSING STREAM AND SLEEPING FOR ${sleepTime} hours`);
       postedReplies = [];
-      isSleeping = true;
+      stream.close();
       setTimeout(() => {
-        isSleeping = false;
+        console.log("____________________ AWAKE. RECONNECTING...");
+        stream.reconnect();
       }, 1000 * 60 * 60 * sleepTime);
       break;
     }
@@ -264,10 +277,6 @@ async function waitForAdditionalTweets() {
 function maybeReply(eventData) {
   console.log("____________________ SOMEONE TWEETED\n", eventData);
 
-  if (isSleeping) {
-    console.log("____________________ SLEEPING");
-    return;
-  }
   // Set the timer to wait for additional tweets that may be part of a thread
   waitForAdditionalTweets();
 
@@ -276,9 +285,9 @@ function maybeReply(eventData) {
 
 // Start streaming -------------------------------------------------------------
 async function main() {
-  const tweetFields = "tweet.fields=attachments,author_id,referenced_tweets,in_reply_to_user_id,created_at,conversation_id";
-  const expansions = "expansions=referenced_tweets.id";
-  const stream = await appOnlyClient.v2.getStream(`tweets/search/stream?${tweetFields}&${expansions}`);
+  const tweetFields = `tweet.fields=${TWEET_FIELDS.join(",")}`;
+  const expansions = `expansions=${TWEET_EXPANSIONS.join(",")}`;
+  stream = await appOnlyClient.v2.getStream(`tweets/search/stream?${tweetFields}&${expansions}`);
 
   // Emitted when Node.js {response} emits a "error" event (contains its payload).
   stream.on(ETwitterStreamEvent.ConnectionError,
