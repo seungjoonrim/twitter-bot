@@ -20,7 +20,7 @@ const API_KEY_SECRET = process.env.SACRIFICE_API_KEY_SECRET;
 // OpenAI creds ----------------------------------------------------------------
 const OAI_API_KEY = process.env.SACRIFICE_OAI_API_KEY;
 
-// Prompt constants -------------------------------------------------------------
+// Prompt params ---------------------------------------------------------------
 const PERSONALITY = "as if you were Marcus Aurelius";
 const TYPE_OF_TWEET = "";
 const OPTIONAL_PHRASES = [
@@ -35,6 +35,43 @@ const ADDITIONAL_PARAMS = [
   "Return the response in quotes",
 ];
 
+// Twitter stream config -------------------------------------------------------
+const TWEET_FIELDS = [
+  "attachments",
+  "author_id",
+  "referenced_tweets",
+  "in_reply_to_user_id",
+  "created_at",
+  "conversation_id",
+];
+const TWEET_EXPANSIONS = [
+  "referenced_tweets.id"
+];
+
+// OpenAI client ---------------------------------------------------------------
+const configuration = new Configuration({
+  apiKey: OAI_API_KEY
+});
+const openai = new OpenAIApi(configuration);
+
+// OAuth1.0a client ------------------------------------------------------------
+const userClient = new TwitterApi({
+  appKey: API_KEY,
+  appSecret: API_KEY_SECRET,
+  accessToken: ACCESS_TOKEN,
+  accessSecret: ACCESS_TOKEN_SECRET,
+});
+
+// OAuth2 client (app-only or user context) ------------------------------------
+const appOnlyClient = new TwitterApi(BEARER_TOKEN);
+
+// Global vars -----------------------------------------------------------------
+let tweetStack = [];
+let postedReplies = [];
+let timer = undefined;
+let stream = undefined;
+
+// Helpers ---------------------------------------------------------------------
 function promptParams() {
   const min = Math.ceil(1);;
   const max = Math.floor(3);;
@@ -55,31 +92,8 @@ function promptParams() {
   ` ${ADDITIONAL_PARAMS.join(". ")}.`;
 }
 
-// OpenAI client ---------------------------------------------------------------
-const configuration = new Configuration({
-  apiKey: OAI_API_KEY
-});
-const openai = new OpenAIApi(configuration);
-
-// OAuth1.0a client ------------------------------------------------------------
-const userClient = new TwitterApi({
-  appKey: API_KEY,
-  appSecret: API_KEY_SECRET,
-  accessToken: ACCESS_TOKEN,
-  accessSecret: ACCESS_TOKEN_SECRET,
-});
-
-// OAuth2 client (app-only or user context) ------------------------------------
-const appOnlyClient = new TwitterApi(BEARER_TOKEN);
-
-let tweetStack = [];
-let postedReplies = [];
-let timer = undefined;
-let isSleeping = false;
-
-// Helpers ---------------------------------------------------------------------
 function joinTweets(tweets) {
-  const tweetContents = tweets.map(t => t.data.text);
+  const tweetContents = tweets.map(t => t.text);
   return tweetContents.join("\n\n");
 }
 
@@ -92,22 +106,22 @@ function sortByReferences(tweets) {
     let references = new Map();
     tweets.forEach(tweet => {
         // Add the tweet to the map with its reference
-        if (tweet.data.referenced_tweets && tweet.data.referenced_tweets.length > 0) {
-            references.set(tweet.data.id, tweet.data.referenced_tweets[0].id);
+        if (tweet.referenced_tweets && tweet.referenced_tweets.length > 0) {
+            references.set(tweet.id, tweet.referenced_tweets[0].id);
         }
     });
     // Sort the tweets based on their references
     tweets.sort((a, b) => {
         // If a does not have a reference, it should come first
-        if (!references.has(a.data.id)) {
+        if (!references.has(a.id)) {
             return -1;
         }
         // If b does not have a reference, it should come first
-        if (!references.has(b.data.id)) {
+        if (!references.has(b.id)) {
             return 1;
         }
         // Compare the references of a and b
-        return references.get(a.data.id) - references.get(b.data.id);
+        return references.get(a.id) - references.get(b.id);
     });
     return tweets;
 }
@@ -124,6 +138,18 @@ function removeHashtags(str) {
   }
   // Entirely remove the hashtags that are left. (At the end of the tweet)
   return words.filter(word => !word.startsWith("#")).join(" ");
+}
+
+function groupBy(arr, key) {
+  return arr.reduce((grouped, i) => {
+    const keyToGroup = i[key];
+    if (grouped[keyToGroup]) {
+      grouped[keyToGroup].push(i);
+    } else {
+      grouped[keyToGroup] = [i];
+    }
+    return grouped;
+  }, {});
 }
 
 // OpenAI ----------------------------------------------------------------------
@@ -157,12 +183,12 @@ async function postReply(tweets, reply) {
   try {
     const replyResp = await userClient.v2.reply(
       reply,
-      tweets[0].data.id
+      tweets[0].id
     );
     const replyTweet = await userClient.v2.singleTweet(replyResp.data.id, {
       expansions: [
-        'entities.mentions.username',
-        'in_reply_to_user_id',
+        "entities.mentions.username",
+        "in_reply_to_user_id",
       ],
     });
     console.log("____________________ REPLY SUCCESS");
@@ -174,63 +200,75 @@ async function postReply(tweets, reply) {
   }
 }
 
-async function createReply() {
+async function createReplies(tweets) {
   timer = undefined;
 
-  const repliesForUserId = postedReplies.filter(t => t.in_reply_to_user_id == tweetStack[0].data.author_id);
-  console.log(`____________________ REPLY COUNT FOR USER: ${repliesForUserId.length}`);
+  const tweetsByConvoId = groupBy(tweets, "conversation_id");
 
-  // We have to sort because sometimes the API returns tweets from threads in the wrong order
-  const sorted = sortByReferences(tweetStack);
-  const joinedTweets = joinTweets(sorted);
+  for (const convoId in tweetsByConvoId) {
+    const tweetsForConvo = tweetsByConvoId[convoId];
+    const ogTweet = tweetsForConvo.find(t => !t.in_reply_to_user_id);
 
-  // (For now) Don't reply to:
-  if ((tweetStack.length == 0) ||
-      (tweetStack.length == 1 && tweetStack[0].data.in_reply_to_user_id) || // tweet replies
-      (tweetStack.length == 1 && Object.keys(tweetStack[0].data.attachments).length > 0) || // single tweets with an image
-      (joinedTweets.length < 80) || // tweets less than 50 chars long
-      (repliesForUserId.length >= 1)) { // a tweet if already replied to once
-    console.log("____________________ IGNORING THIS TWEET");
-    tweetStack = [];
-    return;
-  }
+    if (!ogTweet) { // ignore single reply tweets
+      console.log("____________________ IGNORING THIS TWEET");
+      continue;
+    }
 
-  const openAiPrompt = makePrompt(joinedTweets);
+    const repliesForUserId = postedReplies.filter(t => t.in_reply_to_user_id == ogTweet.author_id);
+    console.log(`____________________ REPLY COUNT FOR USER ${ogTweet.author_id}: ${repliesForUserId.length}`);
 
-  console.log("____________________ HERES THE PROMPT");
-  console.log(openAiPrompt);
+    const filtered = tweetsForConvo.filter(t => t.author_id == ogTweet.author_id); // filter out other user's replies
+    const sorted = sortByReferences(filtered);
+    const joinedTweets = joinTweets(sorted);
 
-  const reply = await reqOpenAi(openAiPrompt);
-  const stripped = removeHashtags(reply);
-  await postReply(sorted, stripped);
+    if ((sorted.length == 0) ||
+        (sorted.length == 1 && Object.keys(sorted[0].attachments).length > 0) || // single tweets with an image
+        (joinedTweets.length < 80) || // tweets less than 50 chars long
+        (repliesForUserId.length >= 1)) { // a tweet if already replied to once
+      console.log("____________________ IGNORING THIS TWEET");
+      continue;
+    }
 
-  tweetStack = [];
+    const openAiPrompt = makePrompt(joinedTweets);
 
-  // Keep it to 10 tweets/day
-  if (postedReplies.length > 9) {
-    const sleepTime = 12; // hours
-    console.log(`____________________ TWEET LIMIT REACHED, SLEEPING FOR ${sleepTime} hours`);
-    postedReplies = [];
-    isSleeping = true;
-    setTimeout(() => {
-      isSleeping = false;
-    }, 1000 * 60 * 60 * sleepTime);
+    console.log("____________________ HERES THE PROMPT");
+    console.log(openAiPrompt);
+
+    const reply = await reqOpenAi(openAiPrompt);
+    const stripped = removeHashtags(reply);
+    console.log(`____________________ POASTING REPLY FOR CONVO ID: ${convoId}`);
+    await postReply(sorted, stripped);
+
+    if (postedReplies.length > 9) {
+      const sleepTime = 12; // hours
+      console.log(`____________________ TWEET LIMIT REACHED, CLOSING STREAM AND SLEEPING FOR ${sleepTime} hours`);
+      postedReplies = [];
+      stream.close();
+      setTimeout(() => {
+        console.log("____________________ AWAKE. RECONNECTING...");
+        stream.reconnect();
+      }, 1000 * 60 * 60 * sleepTime);
+      break;
+    }
   }
 }
 
-// There's probably a better way to do this
+// If a tweet streams in, wait 6 seconds for tweets in a thread, then analyze the stack
+// (There's probably a better way to do this)
 async function waitForAdditionalTweets() {
   if (!timer) {
     timer = setTimeout(() => {
       if (tweetStack.length > 0) {
-        createReply();
+        createReplies(tweetStack);
+        tweetStack = [];
       }
     }, 6000); // for a reference: 13 tweet thread took longer than 3 seconds for all to stream in
   } else {
     clearTimeout(timer);
     timer = setTimeout(() => {
       if (tweetStack.length > 0) {
-        createReply();
+        createReplies(tweetStack);
+        tweetStack = [];
       }
     }, 6000);
   }
@@ -239,35 +277,17 @@ async function waitForAdditionalTweets() {
 function maybeReply(eventData) {
   console.log("____________________ SOMEONE TWEETED\n", eventData);
 
-  if (isSleeping) {
-    console.log("____________________ SLEEPING");
-    return;
-  }
   // Set the timer to wait for additional tweets that may be part of a thread
   waitForAdditionalTweets();
 
-  // New tweet(s) to analyze and potentially reply to
-  if (tweetStack.length == 0 && !eventData.data.in_reply_to_user_id) {
-    tweetStack.push(eventData);
-  }
-
-  // Tweet came in, check if it's part of a thread of one of the tweets already in the stack.
-  // If new tweets come in while a reply is being created, they will be ignored
-  if (tweetStack.length != 0) {
-    const tweetIds = tweetStack.map(t => t.data.id);
-    const conversationId = tweetStack[0].data.conversation_id;
-    const isPartOfThread = tweetIds.includes(eventData.data.referenced_tweets[0].id);
-    if (isPartOfThread || eventData.data.conversation_id == conversationId) {
-      tweetStack.push(eventData);
-    }
-  }
+  tweetStack.push(eventData.data);
 }
 
 // Start streaming -------------------------------------------------------------
 async function main() {
-  const tweetFields = "tweet.fields=attachments,author_id,referenced_tweets,in_reply_to_user_id,created_at,conversation_id";
-  const expansions = "expansions=referenced_tweets.id";
-  const stream = await appOnlyClient.v2.getStream(`tweets/search/stream?${tweetFields}&${expansions}`);
+  const tweetFields = `tweet.fields=${TWEET_FIELDS.join(",")}`;
+  const expansions = `expansions=${TWEET_EXPANSIONS.join(",")}`;
+  stream = await appOnlyClient.v2.getStream(`tweets/search/stream?${tweetFields}&${expansions}`);
 
   // Emitted when Node.js {response} emits a "error" event (contains its payload).
   stream.on(ETwitterStreamEvent.ConnectionError,
@@ -296,4 +316,4 @@ async function main() {
 
 main();
 
-// createReply(MOCK_TWEETS);
+// createReplies(MOCK_TWEETS);
