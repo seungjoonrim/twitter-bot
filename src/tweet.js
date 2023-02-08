@@ -2,7 +2,6 @@ import { reqOpenAi } from "./openai/openai.js";
 import { postTweet, postReply } from "./twitter/twitter.js";
 import { removeHashtags } from "./utils.js";
 
-// Prompt params ---------------------------------------------------------------
 const TOPIC = "sacrifice";
 
 function makePrompt() {

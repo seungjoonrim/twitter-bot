@@ -71,36 +71,6 @@ async function getTweet(tweet) {
   }
 }
 
-async function stream(callbackFn) {
-  const tweetFields = `tweet.fields=${TWEET_FIELDS.join(",")}`;
-  const expansions = `expansions=${TWEET_EXPANSIONS.join(",")}`;
-  stream = await appOnlyClient.v2.getStream(`tweets/search/stream?${tweetFields}&${expansions}`);
-
-  // Emitted when Node.js {response} emits a "error" event (contains its payload).
-  stream.on(ETwitterStreamEvent.ConnectionError,
-    err => console.log("Connection error!", err),
-  );
-
-  // Emitted when Node.js {response} is closed by remote or using .close().
-  stream.on(ETwitterStreamEvent.ConnectionClosed,
-    () => console.log("Connection has been closed."),
-  );
-
-  // Emitted when a Twitter payload (a tweet or not, given the endpoint).
-  stream.on(ETwitterStreamEvent.Data,
-    callbackFn
-  );
-
-  // Emitted when a Twitter sent a signal to maintain connection active
-  stream.on(ETwitterStreamEvent.DataKeepAlive,
-    // () => console.log("Twitter has a keep-alive packet."),
-    () => {},
-  );
-
-  // Enable reconnect feature
-  stream.autoReconnect = true;
-}
-
 class Streamer {
   constructor(callbackFn) {
     this.callback = callbackFn;

@@ -5,7 +5,11 @@ import {
 import { MOCK_TWEETS } from "../mock.js";
 
 import { reqOpenAi } from "./openai/openai.js";
-import { postReply, getTweet, Streamer } from "./twitter/twitter.js";
+import {
+  getTweet,
+  postReply,
+  Streamer
+} from "./twitter/twitter.js";
 import {
   groupBy,
   removeHashtags,
@@ -33,7 +37,7 @@ let postedReplies = [];
 let timer = undefined;
 let streamer = undefined;
 
-// Helpers ---------------------------------------------------------------------
+// Biz -------------------------------------------------------------------------
 function promptParams() {
   const min = Math.ceil(1);;
   const max = Math.floor(3);;
