@@ -1,0 +1,56 @@
+function removeHashtags(str) {
+  const words = str.split(" ");
+  // Only remove the # from hashtags in the middle of sentences
+  for (let i = 0; i < words.length; i++) {
+    if (words[i].startsWith("#") &&
+        (i === 0 || !words[i - 1].startsWith("#")) &&
+        (i === words.length - 1 || !words[i + 1].startsWith("#"))) {
+      words[i] = words[i].substring(1);
+    }
+  }
+  // Entirely remove the hashtags that are left. (At the end of the tweet)
+  return words.filter(word => !word.startsWith("#")).join(" ");
+}
+
+function groupBy(arr, key) {
+  return arr.reduce((grouped, i) => {
+    const keyToGroup = i[key];
+    if (grouped[keyToGroup]) {
+      grouped[keyToGroup].push(i);
+    } else {
+      grouped[keyToGroup] = [i];
+    }
+    return grouped;
+  }, {});
+}
+
+function sortByReferences(tweets) {
+    // Create a map to store the relationship between tweets
+    let references = new Map();
+    tweets.forEach(tweet => {
+        // Add the tweet to the map with its reference
+        if (tweet.referenced_tweets && tweet.referenced_tweets.length > 0) {
+            references.set(tweet.id, tweet.referenced_tweets[0].id);
+        }
+    });
+    // Sort the tweets based on their references
+    tweets.sort((a, b) => {
+        // If a does not have a reference, it should come first
+        if (!references.has(a.id)) {
+            return -1;
+        }
+        // If b does not have a reference, it should come first
+        if (!references.has(b.id)) {
+            return 1;
+        }
+        // Compare the references of a and b
+        return references.get(a.id) - references.get(b.id);
+    });
+    return tweets;
+}
+
+export {
+  groupBy,
+  removeHashtags,
+  sortByReferences,
+}
