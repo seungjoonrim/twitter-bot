@@ -1,7 +1,3 @@
-import {
-  ETwitterStreamEvent,
-} from "twitter-api-v2";
-
 import { MOCK_TWEETS } from "../mock.js";
 
 import { reqOpenAi } from "./openai/openai.js";

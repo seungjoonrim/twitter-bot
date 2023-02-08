@@ -4,7 +4,6 @@ import {
 } from "twitter-api-v2";
 
 // Twitter creds ---------------------------------------------------------------
-const APP_ID = process.env.SACRIFICE_APP_ID;
 const BEARER_TOKEN = process.env.SACRIFICE_BEARER_TOKEN;
 const ACCESS_TOKEN = process.env.SACRIFICE_ACCESS_TOKEN;
 const ACCESS_TOKEN_SECRET = process.env.SACRIFICE_ACCESS_TOKEN_SECRET;

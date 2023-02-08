@@ -1,5 +1,5 @@
 import { reqOpenAi } from "./openai/openai.js";
-import { postTweet, postReply } from "./twitter/twitter.js";
+import { postTweet } from "./twitter/twitter.js";
 import { removeHashtags } from "./utils.js";
 
 const TOPIC = "sacrifice";
