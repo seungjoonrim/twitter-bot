@@ -5,7 +5,7 @@ import {
 import { MOCK_TWEETS } from "../mock.js";
 
 import { reqOpenAi } from "./openai/openai.js";
-import { postReply, getTweet } from "./twitter/twitter.js";
+import { postReply, getTweet, Streamer } from "./twitter/twitter.js";
 import {
   groupBy,
   removeHashtags,
@@ -27,28 +27,11 @@ const ADDITIONAL_PARAMS = [
   "Return the response in quotes",
 ];
 
-// Twitter stream config -------------------------------------------------------
-const TWEET_FIELDS = [
-  "attachments",
-  "author_id",
-  "referenced_tweets",
-  "in_reply_to_user_id",
-  "created_at",
-  "conversation_id",
-];
-const TWEET_EXPANSIONS = [
-  "referenced_tweets.id"
-];
-
 // Global vars -----------------------------------------------------------------
-let tUserClient = undefined;
-let tAppClient = undefined;
-let openaiClient = undefined;
-
 let tweetStack = [];
 let postedReplies = [];
 let timer = undefined;
-let stream = undefined;
+let streamer = undefined;
 
 // Helpers ---------------------------------------------------------------------
 function promptParams() {
@@ -123,10 +106,10 @@ async function createReplies(tweets) {
       const sleepTime = 12; // hours
       console.log(`____________________ TWEET LIMIT REACHED, CLOSING STREAM AND SLEEPING FOR ${sleepTime} hours`);
       postedReplies = [];
-      stream.close();
+      streamer.closeStream();
       setTimeout(() => {
         console.log("____________________ AWAKE. RECONNECTING...");
-        stream.reconnect();
+        streamer.reconnectStream();
       }, 1000 * 60 * 60 * sleepTime);
       break;
     }
@@ -163,38 +146,9 @@ function maybeReply(eventData) {
   tweetStack.push(eventData.data);
 }
 
-async function autoReply(userClient, appOnlyClient, openai) {
-  tUserClient = userClient;
-  tAppClient = appOnlyClient;
-  openaiClient = openai;
-
-  const tweetFields = `tweet.fields=${TWEET_FIELDS.join(",")}`;
-  const expansions = `expansions=${TWEET_EXPANSIONS.join(",")}`;
-  stream = await tAppClient.v2.getStream(`tweets/search/stream?${tweetFields}&${expansions}`);
-
-  // Emitted when Node.js {response} emits a "error" event (contains its payload).
-  stream.on(ETwitterStreamEvent.ConnectionError,
-    err => console.log("Connection error!", err),
-  );
-
-  // Emitted when Node.js {response} is closed by remote or using .close().
-  stream.on(ETwitterStreamEvent.ConnectionClosed,
-    () => console.log("Connection has been closed."),
-  );
-
-  // Emitted when a Twitter payload (a tweet or not, given the endpoint).
-  stream.on(ETwitterStreamEvent.Data,
-    maybeReply
-  );
-
-  // Emitted when a Twitter sent a signal to maintain connection active
-  stream.on(ETwitterStreamEvent.DataKeepAlive,
-    // () => console.log("Twitter has a keep-alive packet."),
-    () => {},
-  );
-
-  // Enable reconnect feature
-  stream.autoReconnect = true;
+async function autoReply() {
+  streamer = new Streamer(maybeReply);
+  streamer.startStream();
 }
 
 // createReplies(MOCK_TWEETS);

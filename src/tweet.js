@@ -5,20 +5,8 @@ import { removeHashtags } from "./utils.js";
 // Prompt params ---------------------------------------------------------------
 const TOPIC = "sacrifice";
 
-// Global vars -----------------------------------------------------------------
-let twitterClient = undefined;
-let openaiClient = undefined;
-
 function makePrompt() {
   return `Come up with an inspiring saying about ${TOPIC}. Keep it to 250 characters or less.`;
-}
-
-async function postTweet(text) {
-  try {
-    const resp = await twitterClient.v2.tweet(text);
-  } catch (err) {
-    console.log("Error tweeting", err);
-  }
 }
 
 async function createTweet() {
@@ -28,10 +16,7 @@ async function createTweet() {
   await postTweet(stripped);
 }
 
-function autoTweet(twitter, openai) {
-  twitterClient = twitter;
-  openaiClient = openai;
-
+function autoTweet() {
   const timeCheck = () => {
     const now = new Date();
     // Tweet everyday at 7am and noon

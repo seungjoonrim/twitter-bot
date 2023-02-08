@@ -1,9 +1,16 @@
+import { Configuration, OpenAIApi } from "openai";
+
+const OAI_API_KEY = process.env.SACRIFICE_OAI_API_KEY;
+
+const configuration = new Configuration({ apiKey: OAI_API_KEY });
+const openai = new OpenAIApi(configuration);
+
 async function reqOpenAi(prompt) {
   console.log("____________________ HERES THE PROMPT");
   console.log(prompt);
 
   try {
-    const response = await openaiClient.createCompletion({
+    const response = await openai.createCompletion({
       model: "text-davinci-003",
       prompt: prompt,
       temperature: 0.5,

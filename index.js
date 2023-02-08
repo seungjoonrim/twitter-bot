@@ -32,8 +32,8 @@ const appOnlyClient = new TwitterApi(BEARER_TOKEN);
 
 // Start streaming -------------------------------------------------------------
 async function main() {
-  autoTweet(userClient, openai);
-  autoReply(userClient, appOnlyClient, openai);
+  autoTweet();
+  autoReply();
 }
 
 main();
