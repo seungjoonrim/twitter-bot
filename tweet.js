@@ -1,13 +1,29 @@
 let twitterClient = undefined;
 let openaiClient = undefined;
 
+const TOPIC = "sacrifice";
+
+function removeHashtags(str) {
+  const words = str.split(" ");
+  // Only remove the # from hashtags in the middle of sentences
+  for (let i = 0; i < words.length; i++) {
+    if (words[i].startsWith("#") &&
+        (i === 0 || !words[i - 1].startsWith("#")) &&
+        (i === words.length - 1 || !words[i + 1].startsWith("#"))) {
+      words[i] = words[i].substring(1);
+    }
+  }
+  // Entirely remove the hashtags that are left. (At the end of the tweet)
+  return words.filter(word => !word.startsWith("#")).join(" ");
+}
+
 function makePrompt() {
-  return "";
+  return `Come up with an inspiring saying about ${TOPIC}. Keep it to 250 characters or less.`;
 }
 
 async function reqOpenAi(prompt) {
   try {
-    const response = await openai.createCompletion({
+    const response = await openaiClient.createCompletion({
       model: "text-davinci-003",
       prompt: prompt,
       temperature: 0.5,
@@ -18,7 +34,7 @@ async function reqOpenAi(prompt) {
       presence_penalty: 0.6, // what does this do?
       stop: null, // what does this do?
     });
-    console.log("______________ OPEN AI RESPONSE:", response.data);
+    console.log("______________ SACRIFICE TWEET:", response.data);
     const text = response.data.choices[0].text;
     if ((text.charAt(2) == '"') && (text.charAt(text.length - 1) == '"')) {
       return text.slice(3, -1);
@@ -30,9 +46,20 @@ async function reqOpenAi(prompt) {
   }
 }
 
-function createTweet() {
+async function tweet(text) {
+  try {
+    const resp = await twitterClient.v2.tweet(text);
+  } catch (err) {
+    console.log("Error tweeting", err);
+  }
+}
+
+async function createTweet() {
   console.log("tweeting!");
-  const openAiPrompt = makePrompt(joinedTweets);
+  const openAiPrompt = makePrompt();
+  const result = reqOpenAi(openAiPrompt);
+  const stripped = removeHashtags(result);
+  await tweet(stripped);
 }
 
 function autoTweet(twitter, openai) {
