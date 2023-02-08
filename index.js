@@ -7,6 +7,9 @@ import {
   OpenAIApi
 } from "openai";
 
+import { autoTweet } from "./tweet.js";
+import { autoReply } from "./reply.js";
+
 import { MOCK_TWEETS } from "./mock.js";
 
 // Twitter creds ---------------------------------------------------------------
@@ -285,6 +288,9 @@ function maybeReply(eventData) {
 
 // Start streaming -------------------------------------------------------------
 async function main() {
+  autoTweet(userClient, openai);
+  autoReply(userClient, appOnlyClient, openai);
+
   const tweetFields = `tweet.fields=${TWEET_FIELDS.join(",")}`;
   const expansions = `expansions=${TWEET_EXPANSIONS.join(",")}`;
   stream = await appOnlyClient.v2.getStream(`tweets/search/stream?${tweetFields}&${expansions}`);
