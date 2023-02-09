@@ -49,8 +49,14 @@ function sortByReferences(tweets) {
     return tweets;
 }
 
+function joinTweets(tweets) {
+  const tweetContents = tweets.map(t => t.text);
+  return tweetContents.join("\n\n");
+}
+
 export {
   groupBy,
+  joinTweets,
   removeHashtags,
   sortByReferences,
 }

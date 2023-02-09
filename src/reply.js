@@ -8,6 +8,7 @@ import {
 } from "./twitter/twitter.js";
 import {
   groupBy,
+  joinTweets,
   removeHashtags,
   sortByReferences
 } from "./utils.js";
@@ -52,11 +53,6 @@ function promptParams() {
   return `From the tweet above, come up with a ${TYPE_OF_TWEET} reply tweet ${PERSONALITY}.` +
   // ` Feel free to use 0 to ${phrases.length} of the following words and phrases if you think any are appropriate: ${phrases.join(", ")}.` +
   ` ${ADDITIONAL_PARAMS.join(". ")}.`;
-}
-
-function joinTweets(tweets) {
-  const tweetContents = tweets.map(t => t.text);
-  return tweetContents.join("\n\n");
 }
 
 function makePrompt(joined) {
@@ -116,7 +112,7 @@ async function createReplies(tweets) {
   }
 }
 
-// If a tweet streams in, wait 6 seconds for tweets in a thread, then analyze the stack
+// If a tweet streams in, wait 6 seconds for add'l tweets in a thread, then analyze the stack
 // (There's probably a better way to do this)
 async function waitForAdditionalTweets() {
   if (!timer) {
@@ -125,7 +121,7 @@ async function waitForAdditionalTweets() {
         createReplies(tweetStack);
         tweetStack = [];
       }
-    }, 6000); // for a reference: 13 tweet thread took longer than 3 seconds for all to stream in
+    }, 6000);
   } else {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -139,14 +135,12 @@ async function waitForAdditionalTweets() {
 
 function maybeReply(eventData) {
   console.log("____________________ SOMEONE TWEETED\n", eventData);
-
   // Set the timer to wait for additional tweets that may be part of a thread
   waitForAdditionalTweets();
-
   tweetStack.push(eventData.data);
 }
 
-async function autoReply() {
+function autoReply() {
   streamer = new Streamer(maybeReply);
   streamer.startStream();
 }

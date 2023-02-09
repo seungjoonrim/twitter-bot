@@ -3,6 +3,10 @@ import { postTweet } from "./twitter/twitter.js";
 import { removeHashtags } from "./utils.js";
 
 const TOPIC = "sacrifice";
+const TIMES_TO_TWEET = [
+  7,
+  12,
+];
 
 function makePrompt() {
   return `Come up with an inspiring saying about ${TOPIC}. Keep it to 250 characters or less.`;
@@ -18,10 +22,10 @@ async function createTweet() {
 function autoTweet() {
   const timeCheck = () => {
     const now = new Date();
-    // Tweet everyday at 7am and noon
-    if ((now.getHours() === 7 && now.getMinutes() === 0) ||
-        (now.getHours() === 12 && now.getMinutes() === 0)) {
-      createTweet();
+    for (const time in TIMES_TO_TWEET) {
+      if (now.getHours() === time && now.getMinutes() === 0) {
+        createTweet();
+      }
     }
   };
 
