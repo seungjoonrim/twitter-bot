@@ -22,8 +22,10 @@ async function createTweet() {
 function autoTweet() {
   const timeCheck = () => {
     const now = new Date();
+    const timezoneOffset = -300; // -300 minutes for EST
+    const estTime = new Date(now.getTime() + now.getTimezoneOffset() * 60 * 1000 + timezoneOffset * 60 * 1000);
     for (const time in TIMES_TO_TWEET) {
-      if (now.getHours() === time && now.getMinutes() === 0) {
+      if (estTime.getHours() === time && estTime.getMinutes() === 0) {
         createTweet();
       }
     }
