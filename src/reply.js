@@ -98,7 +98,7 @@ async function createReplies(tweets) {
     console.log("____________________ ALL REPLIES SO FAR");
     console.log(postedReplies);
 
-    if (postedReplies.length > 9) {
+    if (postedReplies.length == 13) {
       const sleepTime = 12; // hours
       console.log(`____________________ TWEET LIMIT REACHED, CLOSING STREAM AND SLEEPING FOR ${sleepTime} hours`);
       postedReplies = [];
