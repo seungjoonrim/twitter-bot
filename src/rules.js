@@ -56,6 +56,33 @@ async function setInitialRules() {
   await addRules(initialRules);
 };
 
+function parseUserFromRule(rule) {
+  const value = rule.value;
+  const split = value.split(" ");
+  const userString = split.find(i => i.startsWith("from"));
+  return userString.slice(5);
+}
+
+// Pick 25 new profiles to listen for tweets for, but don't pick profiles that
+// we've already replied to.
+async function rotateRules(tweets) {
+  const rules = await getRules();
+  const ruleIds = rules?.map(r => r.id);
+  const tweeterIds = tweets.map(t => t.in_reply_to_user_id);
+  await deleteRules(ruleIds);
+  console.log("-------------- TWEETER IDS");
+  console.log(tweeterIds);
+  const availableRules = RULES.filter(r => {
+    const ruleForUser = parseUserFromRule(r);
+    return !tweeterIds.includes(ruleForUser);
+  });
+  console.log("-------------- AVAILABLE RULES");
+  console.log(availableRules);
+  const rulesToAdd = chooseRandomElements(25, availableRules);
+  await addRules(rulesToAdd);
+}
+
 export {
+  rotateRules,
   setInitialRules,
 }

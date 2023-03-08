@@ -1,4 +1,4 @@
-export const MOCK_TWEETS = [
+export const MOCK_TWEETS_STREAM = [
    {
      "data":{
         "attachments":{
@@ -390,4 +390,20 @@ export const MOCK_TWEETS = [
          }
       ]
    }
+];
+
+
+export const MOCK_POSTED_REPLIES = [
+  {
+    text: '@AlpacaAurelius It is up to us to discover the reasons behind what happens in our lives. We must seek to understand the universe and our place within it.',
+    id: '1633547944384184321',
+    edit_history_tweet_ids: [ '1633547944384184321' ],
+    in_reply_to_user_id: '1059871261092929537'
+  },
+  {
+    text: '@AlpacaAurelius It is up to us to discover the reasons behind what happens in our lives. We must seek to understand the universe and our place within it.',
+    id: '1633547944384184321',
+    edit_history_tweet_ids: [ '1633547944384184321' ],
+    in_reply_to_user_id: '1059871261092929537'
+  }
 ];

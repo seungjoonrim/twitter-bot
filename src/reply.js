@@ -1,4 +1,4 @@
-import { MOCK_TWEETS } from "../mock.js";
+import { MOCK_TWEETS_STREAM } from "../mock.js";
 
 import { reqOpenAi } from "./openai/openai.js";
 import {
@@ -8,6 +8,7 @@ import {
 } from "./twitter/twitter.js";
 import {
   setInitialRules,
+  rotateRules,
 } from "./rules.js";
 import {
   chooseRandomElements,
@@ -95,6 +96,7 @@ async function createReplies(tweets) {
     if (postedReplies.length == 13) {
       const sleepTime = 12; // hours
       console.log(`____________________ TWEET LIMIT REACHED, CLOSING STREAM AND SLEEPING FOR ${sleepTime} hours`);
+      rotateRules(postedReplies);
       postedReplies = [];
       streamer.closeStream();
       setTimeout(() => {
@@ -140,6 +142,6 @@ async function autoReply() {
   streamer.startStream();
 }
 
-// createReplies(MOCK_TWEETS);
+// createReplies(MOCK_TWEETS_STREAM);
 
 export { autoReply }
