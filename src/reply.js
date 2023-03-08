@@ -10,6 +10,7 @@ import {
   setInitialRules,
 } from "./rules.js";
 import {
+  chooseRandomElements,
   groupBy,
   joinTweets,
   removeHashtags,
