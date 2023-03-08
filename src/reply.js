@@ -54,6 +54,17 @@ function makePrompt(joined) {
   return `"` + joined + `"` + "\n\n" + promptParams();
 }
 
+async function sleep(hours) {
+  console.log(`____________________ TWEET LIMIT REACHED, CLOSING STREAM AND SLEEPING FOR ${hours} hours`);
+  rotateRules(postedReplies);
+  postedReplies = [];
+  streamer.closeStream();
+  setTimeout(() => {
+    console.log("____________________ AWAKE. RECONNECTING...");
+    streamer.reconnectStream();
+  }, 1000 * 60 * 60 * hours);
+}
+
 async function createReplies(tweets) {
   timer = undefined;
 
@@ -63,7 +74,7 @@ async function createReplies(tweets) {
     const tweetsForConvo = tweetsByConvoId[convoId];
     const ogTweet = tweetsForConvo.find(t => !t.in_reply_to_user_id);
 
-    if (!ogTweet) { // ignore single reply tweets
+    if (!ogTweet) { // ignore tweets that are originially part of a reply
       console.log("____________________ IGNORING THIS TWEET");
       continue;
     }
@@ -94,15 +105,7 @@ async function createReplies(tweets) {
     console.log(postedReplies);
 
     if (postedReplies.length == 13) {
-      const sleepTime = 12; // hours
-      console.log(`____________________ TWEET LIMIT REACHED, CLOSING STREAM AND SLEEPING FOR ${sleepTime} hours`);
-      rotateRules(postedReplies);
-      postedReplies = [];
-      streamer.closeStream();
-      setTimeout(() => {
-        console.log("____________________ AWAKE. RECONNECTING...");
-        streamer.reconnectStream();
-      }, 1000 * 60 * 60 * sleepTime);
+      await sleep(12);
       break;
     }
   }
