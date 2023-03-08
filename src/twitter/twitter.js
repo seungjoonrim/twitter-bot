@@ -70,6 +70,33 @@ async function getTweet(tweet) {
   }
 }
 
+async function getRules() {
+  try {
+    const rulesResp = await appOnlyClient.v2.streamRules();
+    return rulesResp.data;
+  } catch (err) {
+    console.log("Error getting rules", err);
+  }
+}
+
+async function addRules(rules) {
+  try {
+    await appOnlyClient.v2.updateStreamRules({ add: rules });
+    console.log("____________________ ADD RULES SUCCESS");
+  } catch (err) {
+    console.log("Error adding rules", err);
+  }
+}
+
+async function deleteRules(ids) {
+  try {
+    await appOnlyClient.v2.updateStreamRules({ delete: {ids} });
+    console.log("____________________ DELETE RULES SUCCESS");
+  } catch (err) {
+    console.log("Error deleting rules", err);
+  }
+}
+
 class Streamer {
   constructor(callbackFn) {
     this.callback = callbackFn;
@@ -116,6 +143,9 @@ class Streamer {
 }
 
 export {
+  addRules,
+  deleteRules,
+  getRules,
   getTweet,
   postTweet,
   postReply,

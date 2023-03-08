@@ -54,7 +54,19 @@ function joinTweets(tweets) {
   return tweetContents.join("\n\n");
 }
 
+function chooseRandomElements(amount, arr) {
+  return [...Array(amount).keys()].reduce((result, i) => {
+    const length = arr.length;
+    const index = Math.floor(Math.random() * (Math.floor(length - 1) + 1));
+    const el = arr[index];
+    result.push(el);
+    arr.splice(index, 1);
+    return result;
+  }, []);
+}
+
 export {
+  chooseRandomElements,
   groupBy,
   joinTweets,
   removeHashtags,

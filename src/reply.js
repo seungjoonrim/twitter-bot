@@ -7,6 +7,9 @@ import {
   Streamer
 } from "./twitter/twitter.js";
 import {
+  setInitialRules,
+} from "./rules.js";
+import {
   groupBy,
   joinTweets,
   removeHashtags,
@@ -39,17 +42,7 @@ function promptParams() {
   const min = Math.ceil(1);;
   const max = Math.floor(3);;
   const rand = Math.floor(Math.random() * (max - min + 1)) + min;
-
-  const phrases = [...Array(rand).keys()].reduce((result, i) => {
-    const length = OPTIONAL_PHRASES.length;
-    const index = Math.floor(Math.random() * (Math.floor(length - 1) + 1));
-    const phrase = OPTIONAL_PHRASES[index];
-    const alreadyPulled = result.find(i => i == phrase);
-    if (!alreadyPulled) {
-      result.push(phrase);
-    }
-    return result;
-  }, []);
+  const phrases = chooseRandomElements(rand, OPTIONAL_PHRASES);
   return `From the tweet above, come up with a ${TYPE_OF_TWEET} reply tweet ${PERSONALITY}.` +
   // ` Feel free to use 0 to ${phrases.length} of the following words and phrases if you think any are appropriate: ${phrases.join(", ")}.` +
   ` ${ADDITIONAL_PARAMS.join(". ")}.`;
@@ -140,7 +133,8 @@ function maybeReply(eventData) {
   tweetStack.push(eventData.data);
 }
 
-function autoReply() {
+async function autoReply() {
+  await setInitialRules();
   streamer = new Streamer(maybeReply);
   streamer.startStream();
 }
