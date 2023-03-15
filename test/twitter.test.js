@@ -1,7 +1,14 @@
 import assert from "assert";
 
-describe('My App', function() {
-  it('should do something', function() {
-    assert.equal(1, 1);
+import {
+  addRules,
+  deleteRules,
+  getRules,
+} from "../src/twitter/twitter.js";
+
+describe('Twitter Integration', function() {
+  it('should get rules successfully', async function() {
+    const resp = await getRules();
+    assert.equal(!!resp, !undefined);
   });
 });

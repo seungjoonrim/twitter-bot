@@ -38,6 +38,7 @@ async function postTweet(text) {
   try {
     const resp = await userClient.v2.tweet(text);
     console.log("____________________ TWEET SUCCESS");
+    return resp;
   } catch (err) {
     console.log("Error tweeting", err);
   }
@@ -81,8 +82,9 @@ async function getRules() {
 
 async function addRules(rules) {
   try {
-    await appOnlyClient.v2.updateStreamRules({ add: rules });
+    const resp = await appOnlyClient.v2.updateStreamRules({ add: rules });
     console.log("____________________ ADD RULES SUCCESS");
+    return resp;
   } catch (err) {
     console.log("Error adding rules", err);
   }
@@ -90,8 +92,9 @@ async function addRules(rules) {
 
 async function deleteRules(ids) {
   try {
-    await appOnlyClient.v2.updateStreamRules({ delete: {ids} });
+    const resp = await appOnlyClient.v2.updateStreamRules({ delete: {ids} });
     console.log("____________________ DELETE RULES SUCCESS");
+    return resp;
   } catch (err) {
     console.log("Error deleting rules", err);
   }
