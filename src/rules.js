@@ -56,6 +56,8 @@ async function setInitialRules() {
   await addRules(initialRules);
 };
 
+
+// move to utils
 function parseUserFromRule(rule) {
   const value = rule.value;
   const split = value.split(" ");

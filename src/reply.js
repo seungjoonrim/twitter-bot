@@ -1,4 +1,4 @@
-import { MOCK_TWEETS_STREAM } from "../mock.js";
+import { MOCK_TWEETS_STACK } from "../mock.js";
 
 import { reqOpenAi } from "./openai/openai.js";
 import {
@@ -145,6 +145,6 @@ async function autoReply() {
   streamer.startStream();
 }
 
-// createReplies(MOCK_TWEETS_STREAM);
+// createReplies(MOCK_TWEETS_STACK);
 
 export { autoReply }
