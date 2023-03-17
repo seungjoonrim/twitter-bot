@@ -1,4 +1,4 @@
-import { MOCK_TWEETS_STREAM } from "../mock.js";
+import { MOCK_TWEETS_STACK } from "../mock.js";
 
 import { reqOpenAi } from "./openai/openai.js";
 import {
@@ -94,15 +94,19 @@ async function createReplies(tweets) {
       continue;
     }
 
-    const openAiPrompt = makePrompt(joinedTweets);
-    const reply = await reqOpenAi(openAiPrompt);
-    const stripped = removeHashtags(reply);
-    console.log(`____________________ POASTING REPLY FOR CONVO ID: ${convoId}`);
-    const resp = await postReply(sorted, stripped);
-    const replyTweet = await getTweet(resp);
-    postedReplies.push(replyTweet);
-    console.log("____________________ ALL REPLIES SO FAR");
-    console.log(postedReplies);
+    try {
+      const openAiPrompt = makePrompt(joinedTweets);
+      const reply = await reqOpenAi(openAiPrompt);
+      const stripped = removeHashtags(reply);
+      console.log(`____________________ POASTING REPLY FOR CONVO ID: ${convoId}`);
+      const resp = await postReply(sorted, stripped);
+      const replyTweet = await getTweet(resp);
+      postedReplies.push(replyTweet);
+      console.log("____________________ ALL REPLIES SO FAR");
+      console.log(postedReplies);
+    } catch (err) {
+      continue;
+    }
 
     if (postedReplies.length == 13) {
       await sleep(12);
@@ -145,6 +149,6 @@ async function autoReply() {
   streamer.startStream();
 }
 
-// createReplies(MOCK_TWEETS_STREAM);
+// createReplies(MOCK_TWEETS_STACK);
 
 export { autoReply }

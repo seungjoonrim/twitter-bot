@@ -14,8 +14,13 @@ Twitter bot hooked up to ChatGPT. Autoreplies and autotweets AI generated conten
 - configure personality of the bot in `reply.js` and `tweet.js`
 - configure which accounts you want to listen on and stream in `rules.js`
 
-## Run the bot:
+## Run tests:
 ```
 npm install
-node index.js
+npm run test
+```
+
+## Run the bot:
+```
+npm run start
 ```
