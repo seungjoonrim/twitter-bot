@@ -9,7 +9,7 @@ const TIMES_TO_TWEET = [
 ];
 
 function makePrompt() {
-  return `Come up with an inspiring saying about ${TOPIC}. Keep it to 250 characters or less.`;
+  return `Come up with a tweet that inspires courage and sacrifice. Keep it to 250 characters or less.`;
 }
 
 async function createTweet() {
