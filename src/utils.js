@@ -12,6 +12,13 @@ function removeHashtags(str) {
   return words.filter(word => !word.startsWith("#")).join(" ");
 }
 
+function removeQuotes(str) {
+  const chars = str.split("");
+  chars.splice(0, 1);
+  chars.splice(-1, 1);
+  return chars.join("");
+}
+
 function groupBy(arr, key) {
   return arr.reduce((grouped, i) => {
     const keyToGroup = i[key];
@@ -70,5 +77,6 @@ export {
   groupBy,
   joinTweets,
   removeHashtags,
+  removeQuotes,
   sortByReferences,
 }

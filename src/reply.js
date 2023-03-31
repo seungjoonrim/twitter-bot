@@ -15,6 +15,7 @@ import {
   groupBy,
   joinTweets,
   removeHashtags,
+  removeQuotes,
   sortByReferences
 } from "./utils.js";
 
@@ -97,7 +98,7 @@ async function createReplies(tweets) {
     try {
       const openAiPrompt = makePrompt(joinedTweets);
       const reply = await reqOpenAi(openAiPrompt);
-      const stripped = removeHashtags(reply);
+      const stripped = removeQuotes(removeHashtags(reply));
       console.log(`____________________ POASTING REPLY FOR CONVO ID: ${convoId}`);
       const resp = await postReply(sorted, stripped);
       const replyTweet = await getTweet(resp);

@@ -15,7 +15,7 @@ function makePrompt() {
 async function createTweet() {
   const openAiPrompt = makePrompt();
   const result = await reqOpenAi(openAiPrompt);
-  const stripped = removeHashtags(result);
+  const stripped = removeQuotes(removeHashtags(result));
   await postTweet(stripped);
 }
 
