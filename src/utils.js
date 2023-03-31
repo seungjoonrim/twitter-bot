@@ -14,8 +14,10 @@ function removeHashtags(str) {
 
 function removeQuotes(str) {
   const chars = str.split("");
-  chars.splice(0, 1);
-  chars.splice(-1, 1);
+  if (chars[0] == '"' && chars[chars.length - 1] == '"') {
+    chars.splice(0, 1);
+    chars.splice(-1, 1);
+  }
   return chars.join("");
 }
 
