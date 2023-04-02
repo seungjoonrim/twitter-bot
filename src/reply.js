@@ -34,6 +34,8 @@ const ADDITIONAL_PARAMS = [
   "Return the response in quotes",
 ];
 
+const MAX_REPLIES_PER_DAY = 13;
+
 // Global vars -----------------------------------------------------------------
 let tweetStack = [];
 let postedReplies = [];
@@ -109,7 +111,7 @@ async function createReplies(tweets) {
       continue;
     }
 
-    if (postedReplies.length == 13) {
+    if (postedReplies.length == MAX_REPLIES_PER_DAY) {
       await sleep(12);
       break;
     }
