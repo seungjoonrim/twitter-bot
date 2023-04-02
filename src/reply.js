@@ -100,7 +100,8 @@ async function createReplies(tweets) {
     try {
       const openAiPrompt = makePrompt(joinedTweets);
       const reply = await reqOpenAi(openAiPrompt);
-      const stripped = removeQuotes(removeHashtags(reply));
+      const noQuotes = removeQuotes(reply);
+      const stripped = removeHashtags(noQuotes);
       console.log(`____________________ POASTING REPLY FOR CONVO ID: ${convoId}`);
       const resp = await postReply(sorted, stripped);
       const replyTweet = await getTweet(resp);
