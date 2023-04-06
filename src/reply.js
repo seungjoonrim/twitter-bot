@@ -105,7 +105,9 @@ async function createReplies(tweets) {
       console.log(`____________________ POASTING REPLY FOR CONVO ID: ${convoId}`);
       const resp = await postReply(sorted, stripped);
       const replyTweet = await getTweet(resp);
-      postedReplies.push(replyTweet);
+      if (!!replyTweet) {
+        postedReplies.push(replyTweet);
+      }
       console.log("____________________ ALL REPLIES SO FAR");
       console.log(postedReplies);
     } catch (err) {
