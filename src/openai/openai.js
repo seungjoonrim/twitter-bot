@@ -11,7 +11,7 @@ async function reqOpenAi(prompt) {
 
   try {
     const response = await openai.createCompletion({
-      model: "text-davinci-003",
+      model: "gpt-3.5-turbo",
       prompt: prompt,
       temperature: 0.5,
       max_tokens: 65, // No need to return responses greater than 250 char count for twitter
