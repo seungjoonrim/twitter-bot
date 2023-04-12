@@ -21,7 +21,7 @@ const RULES = [
   { value: "from:1565398380729229313 -is:quote -is:retweet", tag: "Life__Mastery" },
   { value: "from:1353385906858827776 -is:quote -is:retweet", tag: "ML_Philosophy" },
   { value: "from:1258149995645210629 -is:quote -is:retweet", tag: "creation247" },
-  { value: "from:1498385524368850950 -is:quote -is:retweet", tag: "AncestralVril" },
+  // { value: "from:1498385524368850950 -is:quote -is:retweet", tag: "AncestralVril" },
   { value: "from:1335222290250862592 -is:quote -is:retweet", tag: "imodernman" },
   { value: "from:1291732240456650754 -is:quote -is:retweet", tag: "SaveYourSons" },
   { value: "from:1137727109546303488 -is:quote -is:retweet", tag: "MasculineTheory" },
@@ -43,7 +43,6 @@ const RULES = [
   { value: "from:72118738 -is:quote -is:retweet", tag: "MichellCClark" },
   { value: "from:1510645219129184265 -is:quote -is:retweet", tag: "liftyourmind" },
   { value: "from:954336280380346368 -is:quote -is:retweet", tag: "FitFounder" },
-  { value: "from:233472077 -is:quote -is:retweet", tag: "iambrillyant" },
 ];
 
 async function setInitialRules() {

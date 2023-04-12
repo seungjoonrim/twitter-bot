@@ -10,9 +10,17 @@ const TIMES_TO_TWEET = [
   7,
   12,
 ];
+const TWEET_EXAMPLES = [
+  "The bravest thing you can do is keep going even when you're scared.",
+  "Why is the theme of sacrifice not taught in school?\nBecause when you think about sacrifice long enough, all roads point to God.\nAnd governments don't want you to believe in God.",
+  "A lot of you are depressed because you feel like you don't matter.\nWhat if I told you EVERY. SINGLE. CHOICE. you make matters.\nBecause every choice is a sacrifice.\nAnd every sacrifice produces value.\nYou matter. You just need to believe it.",
+  `Nothing in life is free."\nIn other words, "No sacrifice, no value."\nThis also means nothing in life is "cheap."  You can't get the same product for less - you or someone out there will pay the full cost, one way or another.`,
+  "Sacrifice is the ultimate act of love, it transforms what we give up into the greatest gift we can offer.",
+  `*Game starts*\n...\n"Choose your sacrifice."`,
+];
 
 function makePrompt() {
-  return `Come up with a tweet that inspires courage and sacrifice. Keep it to 250 characters or less.`;
+  return `Using these examples:\n\n${TWEET_EXAMPLES.join("\n\n")}\n\nCome up with a tweet that inspires courage and sacrifice. Keep it to 250 characters or less.`;
 }
 
 async function createTweet() {
