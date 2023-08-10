@@ -37,8 +37,10 @@ const ADDITIONAL_PARAMS = [
 const MAX_REPLIES_PER_DAY = 13;
 
 // Global vars -----------------------------------------------------------------
-let tweetStack = [];
-let postedReplies = [];
+// let tweetStack = [];
+// let postedReplies = [];
+let tweetThreads = {};  // Map to store tweets by thread ID
+let lastTweetTime = {}; // Map to store the timestamp of the last tweet in each thread
 let timer = undefined;
 let streamer = undefined;
 
@@ -124,33 +126,51 @@ async function createReplies(tweets) {
   }
 }
 
-// If a tweet streams in, wait 6 seconds for add'l tweets in a thread, then analyze the stack
-// (There's probably a better way to do this)
-async function waitForAdditionalTweets() {
-  if (!timer) {
-    timer = setTimeout(() => {
-      if (tweetStack.length > 0) {
-        createReplies(tweetStack);
-        tweetStack = [];
-      }
-    }, 6000);
-  } else {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      if (tweetStack.length > 0) {
-        createReplies(tweetStack);
-        tweetStack = [];
-      }
-    }, 6000);
+async function waitForAdditionalTweets(tweet) {
+  // Add the tweet to its thread
+  const threadId = tweet.conversation_id;
+  if (!tweetThreads[threadId]) {
+    tweetThreads[threadId] = [];
+  }
+  tweetThreads[threadId].push(tweet);
+
+  // Update the timestamp of the last tweet in the thread
+  lastTweetTime[threadId] = Date.now();
+
+  // If the tweet is not a reply, consider the thread complete
+  if (!tweet.in_reply_to_user_id) {
+    if (tweetThreads[threadId].length > 0) {
+      createReplies(tweetThreads[threadId]);
+      tweetThreads[threadId] = [];
+    }
   }
 }
 
 function maybeReply(eventData) {
   console.log("____________________ SOMEONE TWEETED\n", eventData);
-  // Set the timer to wait for additional tweets that may be part of a thread
-  waitForAdditionalTweets();
-  tweetStack.push(eventData.data);
+  // Add the tweet to its thread and process the thread if it's complete
+  waitForAdditionalTweets(eventData.data);
 }
+
+// Add a function to process incomplete threads after a certain timeout
+setInterval(() => {
+  const now = Date.now();
+  for (const threadId in lastTweetTime) {
+    if (now - lastTweetTime[threadId] > 6000) {  // 6 seconds timeout
+      if (tweetThreads[threadId].length > 0) {
+        createReplies(tweetThreads[threadId]);
+        tweetThreads[threadId] = [];
+      }
+    }
+  }
+}, 1000);  // Check every second
+
+// function maybeReply(eventData) {
+//   console.log("____________________ SOMEONE TWEETED\n", eventData);
+//   // Set the timer to wait for additional tweets that may be part of a thread
+//   waitForAdditionalTweets();
+//   tweetStack.push(eventData.data);
+// }
 
 async function autoReply() {
   await setInitialRules();
